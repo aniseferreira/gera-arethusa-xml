@@ -64,7 +64,7 @@ with st.expander("👤 Configurações do Anotador"):
     u_email = st.text_input("E-mail:", value="anise.a@gmail.com")
 
 # Aqui definimos o nome oficial: input_text
-input_text = st.text_area("Cole as sentenças gregas:", height=300)
+input_text = st.text_area("Cole as sentenças gregas, uma por linha:", height=300)
 
 if st.button("GERAR XML 🚀"):
     if input_text: # <--- Usando o nome oficial
