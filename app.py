@@ -2,13 +2,13 @@ import streamlit as st
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
-import pandas as pd
+import pandas as pd  # Importante para a tabela
 
-# Configuração da Página
-st.set_page_config(page_title="Arethusa XML Skeleton Generator", layout="wide")
+# 1. Configuração da Página
+st.set_page_config(page_title="Arethusa XML Skeleton", layout="centered")
 
-def generate_skeleton_xml(text_block, annotator_name, annotator_email):
-    # Cabeçalho Fixo conforme seu modelo
+# --- A FUNÇÃO (O NOME AQUI É: generate_xml) ---
+def generate_xml(texto_sujo, name, email):
     root = ET.Element("treebank")
     root.set("xmlns:saxon", "http://saxon.sf.net/")
     root.set("xml:lang", "grc")
@@ -16,16 +16,13 @@ def generate_skeleton_xml(text_block, annotator_name, annotator_email):
     root.set("direction", "ltr")
     root.set("format", "smyth3")
 
-    # Data atual
     date_node = ET.SubElement(root, "date")
     date_node.text = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
 
-    # Bloco de Anotadores (Mantendo a estrutura do seu exemplo)
-    uris = [
-        "http://github.com/latin-language-toolkit/arethusa",
-        "http://services2.perseids.org/llt/segtok",
-        "http://github.com/latin-language-toolkit/arethusa"
-    ]
+    uris = ["http://github.com/latin-language-toolkit/arethusa", 
+            "http://services2.perseids.org/llt/segtok", 
+            "http://github.com/latin-language-toolkit/arethusa"]
+    
     for uri in uris:
         ann = ET.SubElement(root, "annotator")
         ET.SubElement(ann, "short")
@@ -33,89 +30,64 @@ def generate_skeleton_xml(text_block, annotator_name, annotator_email):
         ET.SubElement(ann, "address")
         ET.SubElement(ann, "uri").text = uri
 
-    # Anotador Principal (Usuário)
     ann_user = ET.SubElement(root, "annotator")
-    ET.SubElement(ann_user, "short").text = annotator_name.split()[0].lower() if annotator_name else ""
-    ET.SubElement(ann_user, "name").text = annotator_name
-    ET.SubElement(ann_user, "address").text = annotator_email
-    ET.SubElement(ann_user, "uri").text = f"http://data.perseus.org/sosol/users/{annotator_name.split()[0].lower() if annotator_name else 'user'}"
+    short_name = name.split()[0].lower() if name else "user"
+    ET.SubElement(ann_user, "short").text = short_name
+    ET.SubElement(ann_user, "name").text = name
+    ET.SubElement(ann_user, "address").text = email
+    ET.SubElement(ann_user, "uri").text = f"http://data.perseus.org/sosol/users/{short_name}"
 
-    # Processamento das Sentenças
-    lines = [line.strip() for line in text_block.split('\n') if line.strip()]
+    lines = [l.strip() for l in texto_sujo.split('\n') if l.strip()]
     
     for i, line in enumerate(lines, 1):
-        # Remove número inicial se existir (ex: "1 ἐγὼ...")
-        clean_line = re.sub(r'^\d+\s+', '', line)
-        tokens = re.findall(r"[\w\u0370-\u03FF\u1F00-\u1FFF]+|[.,;:·!?]", clean_line)
+        match = re.match(r'^(\d+)\s+(.*)', line)
+        if match:
+            line_num, line_text = match.groups()
+        else:
+            line_num, line_text = str(i), line
+
+        tokens = re.findall(r"[\w\u0370-\u03FF\u1F00-\u1FFF]+|[.,;:·!?]", line_text)
+        sentence = ET.SubElement(root, "sentence", id=str(i), document_id="urn:cts:greekLit:arethusa.skeleton", subdoc=f"1-{i}", span="")
+        ET.SubElement(sentence, "word", id="1", form=line_num, lemma="", postag="", relation="", sg="", head="")
         
-        sentence = ET.SubElement(root, "sentence", 
-                                 id=str(i), 
-                                 document_id="urn:cts:greekLit:arethusa.skeleton", 
-                                 subdoc=f"1-{i}", 
-                                 span="")
-        
-        # Primeiro Word ID=1 é o número da linha para manter seu padrão
-        ET.SubElement(sentence, "word", id="1", form=str(i), lemma="", postag="", relation="", sg="", head="")
-        
-        # Tokens reais começando do ID 2
         for j, token in enumerate(tokens, 2):
-            # Lógica para pontuação final automática
-            is_punct = token in [".", "·", ";", "!", "·"]
-            rel = "AuxK" if is_punct else ""
-            head = "0" if is_punct else ""
-            
-            ET.SubElement(sentence, "word", 
-                          id=str(j), 
-                          form=token, 
-                          lemma="", 
-                          postag="", 
-                          relation=rel, 
-                          sg="", 
-                          head=head)
+            is_end = token in [".", "·", ";", "!", "·"]
+            ET.SubElement(sentence, "word", id=str(j), form=token, lemma="", postag="", relation="AuxK" if is_end else "", sg="", head="0" if is_end else "")
 
-    # Transformar em string formatada
-    return ET.tostring(root, encoding='UTF-8', xml_declaration=True)
+    return ET.tostring(root, encoding='utf-8')
 
-# Interface Streamlit
-st.title("🏛️ Gerador de Esqueleto XML Arethusa")
-st.markdown("### Insira as sentenças (uma por linha) para gerar o arquivo XML com atributos vazios.")
+# --- INTERFACE (A VARIÁVEL AQUI É: input_text) ---
+st.title("🏛️ Arethusa Skeleton Generator")
 
-with st.sidebar:
-    st.header("Dados do Anotador")
-    name = st.text_input("Nome:", value="seu nome")
-    email = st.text_input("E-mail:", value="seu email")
+with st.expander("👤 Configurações do Anotador"):
+    u_name = st.text_input("Nome:", value="Anise Ferreira")
+    u_email = st.text_input("E-mail:", value="anise.a@gmail.com")
 
-input_text = st.text_area("Sentenças Gregas:", height=300, placeholder="1 ἐγὼ δ ' ἔσοπτρον εἴην...\n2 ἐγὼ χιτὼν γενοίμην...")
-
-# ... (todo o resto do código acima)
+# Aqui definimos o nome oficial: input_text
+input_text = st.text_area("Cole as sentenças gregas:", height=300)
 
 if st.button("GERAR XML 🚀"):
-    if input_text:  # <--- Mude de txt_area para input_text aqui
-        result = generate_xml(input_text, u_name, u_email) # <--- E aqui
+    if input_text: # <--- Usando o nome oficial
+        # Chamando a função com o nome oficial
+        result = generate_xml(input_text, u_name, u_email)
         
-        # 2. Mostra o botão de download (indentado dentro do if button)
         st.download_button(
-            label="📥 Baixar XML para o Perseids",
+            label="📥 Baixar XML",
             data=result,
             file_name="skeleton.xml",
             mime="application/xml",
             use_container_width=True
         )
         
-        st.success("XML criado! Veja a prévia dos tokens abaixo:")
-
-        # --- AQUI ENTRA O PANDAS PARA A TABELA ---
-        # Criamos uma lista de dicionários rápida para o Pandas ler
+        # Tabela de conferência
         preview_data = []
-        linhas = [l.strip() for l in txt_area.split('\n') if l.strip()]
-        for linha in linhas:
-            tokens = re.findall(r"[\w\u0370-\u03FF\u1F00-\u1FFF]+|[.,;:·!?]", linha)
-            for t in tokens:
-                preview_data.append({"Palavra": t, "Lemma": "", "Postag": ""})
+        for i, linha in enumerate(input_text.split('\n'), 1):
+            if linha.strip():
+                tokens = re.findall(r"[\w\u0370-\u03FF\u1F00-\u1FFF]+|[.,;:·!?]", linha)
+                for t in tokens:
+                    preview_data.append({"Sentença": i, "Palavra": t})
         
-        df = pd.DataFrame(preview_data)
-        st.table(df) # Isso desenha a tabela na tela
-        # -----------------------------------------
-        
+        st.write("### Prévia dos Tokens:")
+        st.dataframe(pd.DataFrame(preview_data), use_container_width=True)
     else:
-        st.error("Insira o texto antes de gerar.")
+        st.error("Cole o texto grego primeiro!")
