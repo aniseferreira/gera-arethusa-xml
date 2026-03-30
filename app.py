@@ -78,7 +78,7 @@ def generate_skeleton_xml(text_block, annotator_name, annotator_email):
 
 # Interface Streamlit
 st.title("🏛️ Gerador de Esqueleto XML Arethusa")
-st.markdown("Insira as sentenças (uma por linha) para gerar o arquivo XML com atributos vazios.")
+st.markdown("### Insira as sentenças (uma por linha) para gerar o arquivo XML com atributos vazios.")
 
 with st.sidebar:
     st.header("Dados do Anotador")
