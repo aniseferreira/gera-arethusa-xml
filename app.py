@@ -59,9 +59,16 @@ def generate_xml(texto_sujo, name, email):
 # --- INTERFACE (A VARIÁVEL AQUI É: input_text) ---
 st.title("🏛️ Arethusa Skeleton Generator")
 
-with st.expander("👤 Configurações do Anotador"):
-    u_name = st.text_input("Nome:", value="Seu nome")
-    u_email = st.text_input("E-mail:", value="Seu email")
+    
+# --- DENTRO DA SIDEBAR OU EXPANDER (ONDE FICA O NOME/EMAIL) ---
+with st.expander("👤 Configurações do Anotador e Documento"):
+    u_name = st.text_input("Nome:", value="Anise Ferreira")
+    u_email = st.text_input("E-mail:", value="anise.a@gmail.com")
+    st.divider()
+    # Novos campos para o URN e Passagem
+    u_urn = st.text_input("URN / Document ID:", value="Autor")
+    u_subdoc = st.text_input("Subdoc / Passagem (opcional):", placeholder="Ex: 1.3.1")
+
 
 # Aqui definimos o nome oficial: input_text
 input_text = st.text_area("Cole as sentenças gregas, uma por linha:", height=300)
