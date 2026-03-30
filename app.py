@@ -82,17 +82,16 @@ st.markdown("### Insira as sentenças (uma por linha) para gerar o arquivo XML c
 
 with st.sidebar:
     st.header("Dados do Anotador")
-    name = st.text_input("Nome:", value="Anise Ferreira")
-    email = st.text_input("E-mail:", value="anise.a@gmail.com")
+    name = st.text_input("Nome:", value="seu nome")
+    email = st.text_input("E-mail:", value="seu email")
 
 input_text = st.text_area("Sentenças Gregas:", height=300, placeholder="1 ἐγὼ δ ' ἔσοπτρον εἴην...\n2 ἐγὼ χιτὼν γενοίμην...")
 
 # ... (todo o resto do código acima)
 
 if st.button("GERAR XML 🚀"):
-    if txt_area:
-        # 1. Gera o XML (lógica que já temos)
-        result = generate_xml(txt_area, u_name, u_email)
+    if input_text:  # <--- Mude de txt_area para input_text aqui
+        result = generate_xml(input_text, u_name, u_email) # <--- E aqui
         
         # 2. Mostra o botão de download (indentado dentro do if button)
         st.download_button(
