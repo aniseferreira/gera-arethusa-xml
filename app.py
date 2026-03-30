@@ -2,6 +2,7 @@ import streamlit as st
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
+import pandas as pd
 
 # Configuração da Página
 st.set_page_config(page_title="Arethusa XML Skeleton Generator", layout="wide")
@@ -86,16 +87,36 @@ with st.sidebar:
 
 input_text = st.text_area("Sentenças Gregas:", height=300, placeholder="1 ἐγὼ δ ' ἔσοπτρον εἴην...\n2 ἐγὼ χιτὼν γενοίμην...")
 
-if st.button("Gerar XML 📦"):
-    if input_text:
-        xml_output = generate_skeleton_xml(input_text, name, email)
+# ... (todo o resto do código acima)
+
+if st.button("GERAR XML 🚀"):
+    if txt_area:
+        # 1. Gera o XML (lógica que já temos)
+        result = generate_xml(txt_area, u_name, u_email)
+        
+        # 2. Mostra o botão de download (indentado dentro do if button)
         st.download_button(
-            label="Download XML Skeleton",
-            data=xml_output,
-            file_name="skeleton_arethusa.xml",
-            mime="application/xml"
+            label="📥 Baixar XML para o Perseids",
+            data=result,
+            file_name="skeleton.xml",
+            mime="application/xml",
+            use_container_width=True
         )
-        st.success("XML gerado com sucesso!")
-        st.code(xml_output.decode("utf-8")[:1000] + "...", language="xml")
+        
+        st.success("XML criado! Veja a prévia dos tokens abaixo:")
+
+        # --- AQUI ENTRA O PANDAS PARA A TABELA ---
+        # Criamos uma lista de dicionários rápida para o Pandas ler
+        preview_data = []
+        linhas = [l.strip() for l in txt_area.split('\n') if l.strip()]
+        for linha in linhas:
+            tokens = re.findall(r"[\w\u0370-\u03FF\u1F00-\u1FFF]+|[.,;:·!?]", linha)
+            for t in tokens:
+                preview_data.append({"Palavra": t, "Lemma": "", "Postag": ""})
+        
+        df = pd.DataFrame(preview_data)
+        st.table(df) # Isso desenha a tabela na tela
+        # -----------------------------------------
+        
     else:
-        st.warning("Por favor, insira algum texto.")
+        st.error("Insira o texto antes de gerar.")
